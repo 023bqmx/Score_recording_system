@@ -2,131 +2,323 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>สมุดบันทึกกรรม</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap');
-        body { font-family: 'Sarabun', sans-serif; background-color: #F3F4F6; }
-        .tab-active { border-bottom: 2px solid #D97706; color: #D97706; font-weight: 600; } /* เปลี่ยนธีมเป็นสีทอง */
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
+        
+        body { 
+            font-family: 'Sarabun', sans-serif; 
+            background: #fdfbf7; 
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+            overflow-x: hidden; /* ป้องกันเลื่อนซ้ายขวา */
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeOut {
+            to { opacity: 0; visibility: hidden; }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes shine {
+            0% { background-position: -100% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        /* --- Splash Screen Styles --- */
+        /* --- Splash Screen Styles (ธีมสีทองมงคล) --- */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* เปลี่ยนเป็นสีครีมอุ่นๆ ไล่เฉดไปทางทองอ่อนๆ */
+            background: linear-gradient(to bottom, #fffbeb, #fef3c7); 
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: opacity 0.8s ease-out;
+            /* เพิ่มลาย Texture จางๆ ให้ดูเหมือนกระดาษเก่า */
+            background-image: 
+                radial-gradient(#d1d5db 1px, transparent 1px),
+                linear-gradient(to bottom, #fffbeb, #fef3c7);
+            background-size: 20px 20px, 100% 100%;
+        }
+
+        .splash-logo {
+            width: 180px;
+            height: auto;
+            /* เพิ่ม Drop Shadow สีส้มเข้ม ให้โลโก้ลอยเด่นออกมาจากพื้นหลัง */
+            filter: drop-shadow(0 10px 15px rgba(124, 45, 18, 0.3));
+            animation: fadeIn 1.5s ease-out, float 3s ease-in-out infinite;
+        }
+
+        .click-to-enter {
+            margin-top: 40px;
+            /* เปลี่ยนเป็นสีน้ำตาลทองเข้มๆ เพื่อให้อ่านง่ายและดูขลัง */
+            color: #92400e; 
+            font-size: 0.9rem;
+            letter-spacing: 3px; /* เพิ่มระยะห่างตัวอักษรให้ดูแพง */
+            text-transform: uppercase;
+            font-weight: 600;
+            opacity: 0.8;
+            animation: fadeIn 2s ease-out 0.5s backwards, float 3s ease-in-out infinite 0.5s;
+        }
+
+        /* --- CSS เดิม (ไม่แก้) --- */
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .nav-btn { position: relative; transition: all 0.3s ease; }
+        .nav-btn::after {
+            content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 3px;
+            background: linear-gradient(90deg, #F59E0B, #D97706);
+            transition: all 0.3s ease; transform: translateX(-50%); border-radius: 99px;
+        }
+        .tab-active { color: #D97706; font-weight: 700; }
+        .tab-active::after { width: 80%; }
+        .custom-input { transition: all 0.3s ease; background: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+        .custom-input:focus { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .input-merit:focus { border-color: #FCD34D; box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2); }
+        .input-sin:focus { border-color: #FCA5A5; box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2); }
+        .btn-submit {
+            background: linear-gradient(45deg, #F59E0B, #EA580C, #F59E0B);
+            background-size: 200% auto; animation: shine 3s infinite linear; border: none; transition: all 0.3s ease;
+        }
+        .btn-submit:active { transform: scale(0.95); }
+        .card-modern {
+            background: white; border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            border: 1px solid rgba(243, 244, 246, 0.8); transition: transform 0.3s ease;
+        }
         .hidden-section { display: none; }
     </style>
     <link rel="icon" href="logo.png">
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen relative pb-20">
+<body class="text-gray-800 min-h-screen relative pb-24">
 
-    <header class="bg-white shadow-sm sticky top-0 z-10">
-        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-gray-800">😇 สมุดบันทึกกรรม</h1>
-            <div id="user-display" class="text-xs text-gray-400">Loading...</div>
+    <div id="splash-screen">
+        <img src="currentlogo.png" alt="Logo" class="splash-logo"> 
+        <div class="click-to-enter">Click anywhere to enter</div>
+    </div>
+    <header class="glass-header sticky top-0 z-40">
+        <div class="max-w-md mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-200">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h1 class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-600 to-orange-600">
+                    สมุดบันทึกกรรม
+                </h1>
+            </div>
+            <div id="user-display" class="text-xs px-3 py-1 bg-gray-100 rounded-full text-gray-500 font-medium">Made by กุนเชียง .</div>
         </div>
-        <nav class="flex justify-around bg-white border-t border-gray-100">
-            <button onclick="switchTab('form')" id="btn-form" class="flex-1 py-3 text-sm text-gray-500 tab-active">บันทึก</button>
-            <button onclick="switchTab('history')" id="btn-history" class="flex-1 py-3 text-sm text-gray-500">ประวัติ</button>
-            <button onclick="switchTab('leaderboard')" id="btn-leaderboard" class="flex-1 py-3 text-sm text-gray-500">อันดับ</button>
+        
+        <nav class="flex justify-around pt-1 pb-0 max-w-md mx-auto">
+            <button onclick="switchTab('form')" id="btn-form" class="nav-btn flex-1 py-3 text-sm text-gray-400 tab-active hover:text-orange-400">
+                <i class="fas fa-edit mb-1 block text-lg"></i> บันทึก
+            </button>
+            <button onclick="switchTab('history')" id="btn-history" class="nav-btn flex-1 py-3 text-sm text-gray-400 hover:text-orange-400">
+                <i class="fas fa-history mb-1 block text-lg"></i> ประวัติ
+            </button>
+            <button onclick="switchTab('leaderboard')" id="btn-leaderboard" class="nav-btn flex-1 py-3 text-sm text-gray-400 hover:text-orange-400">
+                <i class="fas fa-trophy mb-1 block text-lg"></i> อันดับ
+            </button>
         </nav>
     </header>
 
-    <main class="max-w-md mx-auto p-4">
+    <main class="max-w-md mx-auto p-4 relative z-0">
         
-        <section id="sec-form" class="space-y-4">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h2 class="text-lg font-semibold mb-4 text-gray-700">ใบข้อมูล</h2>
-                <form id="scoreForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-1">ชื่อ</label>
-                        <input type="text" id="name" required class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-yellow-100 focus:border-yellow-400 outline-none transition" placeholder="กรอกชื่อของคุณ">
+        <section id="sec-form" class="space-y-5 animate-fade-in">
+            <div class="card-modern p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-bold text-gray-700">✍️ กรอกกรรม</h2>
+                    <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded">วันนี้: <span id="displayDate"></span></span>
+                </div>
+                
+                <form id="scoreForm" class="space-y-5">
+                    <div class="group">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">ชื่อผู้กระทำ</label>
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-3.5 text-gray-300 group-focus-within:text-orange-400 transition-colors"></i>
+                            <input type="text" id="name" list="nameOptions" required class="custom-input w-full p-3 pl-10 rounded-xl border border-gray-200 outline-none focus:border-orange-400" placeholder="ระบุชื่อของคุณ">
+                            <datalist id="nameOptions"></datalist>
+                        </div>
                     </div>
                     
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-1">บทบาท</label>
-                        <input type="text" id="role" required class="w-full p-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-yellow-100 focus:border-yellow-400 outline-none transition" placeholder="เช่น ผู้กล้า, ชาวบ้าน">
+                    <div class="group">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">บทบาท</label>
+                        <div class="relative">
+                            <i class="fas fa-id-badge absolute left-3 top-3.5 text-gray-300 group-focus-within:text-orange-400 transition-colors"></i>
+                            <input type="text" id="role" list="roleOptions" required class="custom-input w-full p-3 pl-10 rounded-xl border border-gray-200 outline-none focus:border-orange-400" placeholder="ระบุบทบาทของคุณ (เช่น นักเรียน, พนักงาน, ฯลฯ)">
+                            <datalist id="roleOptions"></datalist>
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-yellow-600 mb-1">🌟 แต้มบุญ (Merit)</label>
-                        <input type="number" id="merit" class="w-full p-2.5 rounded-lg border border-gray-300 focus:border-yellow-400 outline-none bg-yellow-50" placeholder="0">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="group">
+                            <label class="block text-xs font-bold text-yellow-600 uppercase tracking-wide mb-1.5 ml-1">🌟 แต้มบุญ</label>
+                            <input type="number" id="merit" class="custom-input input-merit w-full p-3 rounded-xl border border-yellow-200 bg-yellow-50 text-yellow-700 font-bold outline-none text-center text-lg" placeholder="0">
+                        </div>
+                        <div class="group">
+                            <label class="block text-xs font-bold text-red-500 uppercase tracking-wide mb-1.5 ml-1">🔥 แต้มบาป</label>
+                            <input type="number" id="sin" class="custom-input input-sin w-full p-3 rounded-xl border border-red-200 bg-red-50 text-red-600 font-bold outline-none text-center text-lg" placeholder="0">
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-red-600 mb-1">🔥 แต้มบาป (Sin)</label>
-                        <input type="number" id="sin" class="w-full p-2.5 rounded-lg border border-gray-300 focus:border-red-400 outline-none bg-red-50" placeholder="0">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-1">วันที่บันทึก</label>
-                        <input type="date" id="date" required class="w-full p-2.5 rounded-lg border border-gray-300 focus:border-blue-400 outline-none">
-                    </div>
-
-                    <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg shadow-yellow-500/30 transition active:scale-95">
-                        ยืนยันข้อมูล
+                    <input type="date" id="date" required class="hidden">
+                    <button type="submit" id="submitBtn" class="btn-submit w-full text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 text-lg mt-4">
+                        <span>ยืนยันข้อมูล</span> <i class="fas fa-check-circle"></i>
                     </button>
                 </form>
             </div>
         </section>
 
-        <section id="sec-history" class="hidden-section space-y-3">
-            <h2 class="text-lg font-semibold text-gray-700 pl-1">ประวัติการบันทึกของฉัน</h2>
-            <div id="history-list" class="space-y-3">
-                </div>
+        <section id="sec-history" class="hidden-section space-y-4 animate-fade-in">
+            <h2 class="text-lg font-bold text-gray-700 pl-1 flex items-center gap-2">
+                <i class="fas fa-clock text-orange-400"></i> ประวัติของฉัน
+            </h2>
+            <div id="history-list" class="space-y-3"></div>
         </section>
 
-        <section id="sec-leaderboard" class="hidden-section">
-            <h2 class="text-lg font-semibold text-gray-700 mb-3 pl-1">🏆 ตารางคะแนนกรรม (รวมยอด)</h2>
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 text-gray-500 text-xs uppercase font-semibold">
-                        <tr>
-                            <th class="px-3 py-3 w-8 text-center">#</th>
-                            <th class="px-2 py-3">ชื่อ</th>
-                            <th class="px-2 py-3 text-center text-yellow-600">บุญ</th>
-                            <th class="px-3 py-3 text-center text-red-600">บาป</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboard-list" class="divide-y divide-gray-100 text-sm">
-                        </tbody>
-                </table>
+        <section id="sec-leaderboard" class="hidden-section pb-20">
+            <div class="relative bg-gradient-to-r from-yellow-500 to-orange-600 rounded-3xl p-6 text-white mb-6 shadow-xl overflow-hidden mt-2 mx-1">
+                <div class="relative z-10 flex justify-between items-end">
+                    <div>
+                        <h2 class="text-2xl font-bold mb-1 text-shadow">🏆 ทำเนียบกรรม</h2>
+                        <p class="text-yellow-100 text-sm opacity-90">ผู้สะสมแต้มบุญสุทธิสูงสุด</p>
+                    </div>
+                    <i class="fas fa-trophy text-4xl text-yellow-300 opacity-50 transform rotate-12"></i>
+                </div>
+                <div class="absolute -right-6 -top-6 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
+                <div class="absolute left-10 bottom-[-20px] w-20 h-20 bg-yellow-300 opacity-20 rounded-full blur-xl"></div>
+            </div>
+            <div class="px-1">
+                <div id="leaderboard-list" class="space-y-3"></div>
             </div>
         </section>
 
     </main>
 
-    <button onclick="toggleModal()" class="fixed bottom-4 right-4 bg-white text-gray-400 p-3 rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 z-50">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+    <button onclick="toggleModal()" class="fixed bottom-6 right-6 bg-white text-gray-400 hover:text-orange-500 w-14 h-14 rounded-full shadow-lg border border-gray-100 z-30 transition-all hover:scale-110 flex items-center justify-center">
+        <i class="fas fa-info-circle text-3xl"></i>
     </button>
-    <div id="infoModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-            <h3 class="text-lg font-bold text-gray-800 mb-2">ข้อชี้แจง</h3>
-            <ul class="text-sm text-gray-600 space-y-2 list-disc list-inside mb-6">
-                <li>คะแนน "บุญ" และ "บาป" จะถูกสะสมรวมยอดจากชื่อเดิม</li>
-                <li>โปรดกรอกชื่อให้ตรงเดิมทุกครั้งเพื่อสะสมแต้ม</li>
+    <div id="infoModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl transform scale-100 transition-transform">
+            <div class="text-center mb-4">
+                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3 text-orange-500 text-xl">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800">กฎแห่งกรรม</h3>
+            </div>
+            <ul class="text-sm text-gray-600 space-y-3 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-1"></i> <span>คำนวณจาก (แต้มบุญ - แต้มบาป)</span></li>
+                <li class="flex items-start gap-2"><i class="fas fa-exclamation-triangle text-orange-400 mt-1"></i> <span>แต้มสะสมจะอิงตามชื่อที่กรอก</span></li>
             </ul>
-            <button onclick="toggleModal()" class="w-full bg-gray-100 text-gray-700 font-semibold py-2 rounded-lg hover:bg-gray-200">ปิดหน้าต่าง</button>
+            <button onclick="toggleModal()" class="w-full bg-gray-800 text-white font-semibold py-3 rounded-xl hover:bg-gray-900 transition-colors">รับทราบ</button>
         </div>
     </div>
 
     <script>
-        // *** วาง URL Apps Script ที่ได้จากการ Deploy ใหม่ที่นี่ ***
+        // *** URL Apps Script (New Version) ***
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby_mW8OmNbuRgjettu_wrnnfXS3cP5IiJBuc9qYX2OCgH4RFyss4UwpInYJav8vP400Pg/exec"; 
         
         let currentUserId = "GUEST_USER";
 
+        // --- SPLASH SCREEN LOGIC ---
+        const splash = document.getElementById('splash-screen');
+        splash.addEventListener('click', () => {
+            splash.style.animation = 'fadeOut 0.8s forwards'; // เล่น Animation หายไป
+            setTimeout(() => {
+                splash.style.display = 'none'; // ซ่อนออกจากจอจริงๆ
+            }, 800);
+        });
+        // ---------------------------
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const dateInput = document.getElementById('date');
+            const displayDate = document.getElementById('displayDate');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+            const thaiDate = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+            displayDate.innerText = thaiDate;
+        });
+
         async function main() {
-            // LIFF INIT CODE HERE (ถ้ามี)
-            // ...
+             try {
+                // LIFF Logic (Uncomment to use)
+                // await liff.init({ liffId: "YOUR_LIFF_ID" }); 
+                // if (liff.isLoggedIn()) {
+                //     const profile = await liff.getProfile();
+                //     currentUserId = profile.userId;
+                //     document.getElementById('user-display').innerText = profile.displayName;
+                //     document.getElementById('user-display').classList.add('bg-orange-100', 'text-orange-600');
+                // }
+
+                // โหลดข้อมูล Autocomplete
+                fetchAutocompleteData();
+
+            } catch (err) {
+                console.error(err);
+            }
         }
         main();
+
+        function fetchAutocompleteData() {
+            fetch(`${SCRIPT_URL}?action=leaderboard`)
+            .then(res => res.json())
+            .then(data => {
+                const nameList = document.getElementById('nameOptions');
+                const roleList = document.getElementById('roleOptions');
+                nameList.innerHTML = '';
+                roleList.innerHTML = '';
+                const uniqueNames = [...new Set(data.map(item => item.name))];
+                const uniqueRoles = [...new Set(data.map(item => item.role))];
+                uniqueNames.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    nameList.appendChild(option);
+                });
+                uniqueRoles.forEach(role => {
+                    const option = document.createElement('option');
+                    option.value = role;
+                    roleList.appendChild(option);
+                });
+            });
+        }
 
         function switchTab(tabName) {
             ['form', 'history', 'leaderboard'].forEach(t => {
                 document.getElementById(`sec-${t}`).classList.add('hidden-section');
-                document.getElementById(`btn-${t}`).classList.remove('tab-active');
+                document.getElementById(`btn-${t}`).classList.remove('tab-active', 'text-orange-500');
+                document.getElementById(`btn-${t}`).classList.add('text-gray-400');
             });
             document.getElementById(`sec-${tabName}`).classList.remove('hidden-section');
-            document.getElementById(`btn-${tabName}`).classList.add('tab-active');
+            const activeBtn = document.getElementById(`btn-${tabName}`);
+            activeBtn.classList.add('tab-active', 'text-orange-500');
+            activeBtn.classList.remove('text-gray-400');
 
             if (tabName === 'history') loadHistory();
             if (tabName === 'leaderboard') loadLeaderboard();
@@ -135,16 +327,17 @@
         document.getElementById('scoreForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            const originalBtnText = btn.innerText;
-            btn.innerText = "กำลังส่งกรรม...";
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังส่งกรรม...';
             btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
 
             const formData = {
                 userId: currentUserId,
                 name: document.getElementById('name').value,
                 role: document.getElementById('role').value,
-                merit: document.getElementById('merit').value || 0, // ถ้าไม่กรอกให้เป็น 0
-                sin: document.getElementById('sin').value || 0,     // ถ้าไม่กรอกให้เป็น 0
+                merit: document.getElementById('merit').value || 0,
+                sin: document.getElementById('sin').value || 0,
                 date: document.getElementById('date').value
             };
 
@@ -154,24 +347,26 @@
             })
             .then(() => {
                 saveHistoryToLocal(formData);
-                alert("บันทึกกรรมเรียบร้อย! 🙏");
+                alert("✨ บันทึกกรรมเรียบร้อย! สาธุ 99 🙏");
                 document.getElementById('scoreForm').reset();
-                btn.innerText = originalBtnText;
+                document.getElementById('date').value = new Date().toISOString().split('T')[0];
+                btn.innerHTML = originalBtnText;
                 btn.disabled = false;
-                if(!document.getElementById('sec-history').classList.contains('hidden-section')){
-                    loadHistory();
-                }
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                fetchAutocompleteData(); // อัปเดตรายชื่อใหม่ทันที
+                if(!document.getElementById('sec-history').classList.contains('hidden-section')){ loadHistory(); }
             })
             .catch(err => {
                 console.error(err);
                 alert("เกิดข้อผิดพลาดในการส่ง แต่บันทึกในเครื่องไว้แล้ว");
                 btn.disabled = false;
+                btn.innerHTML = originalBtnText;
             });
         });
 
         function saveHistoryToLocal(data) {
             let history = JSON.parse(localStorage.getItem('myKarmaHistory') || '[]');
-            history.unshift(data); // เก็บทั้งหมดลง LocalStorage
+            history.unshift(data);
             localStorage.setItem('myKarmaHistory', JSON.stringify(history));
         }
 
@@ -181,60 +376,117 @@
             const data = JSON.parse(localStorage.getItem('myKarmaHistory') || '[]');
 
             if(data.length === 0) {
-                list.innerHTML = '<div class="text-center text-gray-400 mt-10">ยังไม่มีประวัติ</div>';
+                list.innerHTML = `
+                    <div class="text-center py-10 opacity-50">
+                        <i class="fas fa-scroll text-4xl text-gray-300 mb-2"></i>
+                        <p class="text-sm text-gray-400">ยังไม่มีบันทึกกรรมในเครื่องนี้</p>
+                    </div>`;
                 return;
             }
 
-            data.forEach(item => {
+            data.forEach((item, index) => {
                 const div = document.createElement('div');
-                div.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center";
+                div.style.animationDelay = `${index * 0.05}s`;
+                // เพิ่ม class 'relative' เพื่อให้ปุ่มลบอ้างอิงตำแหน่งได้
+                div.className = "card-modern p-4 flex justify-between items-center animate-fade-in relative group";
+                
                 div.innerHTML = `
-                    <div>
-                        <div class="text-xs text-gray-400">${item.date}</div>
-                        <div class="font-bold text-gray-700">${item.role}</div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
+                            <i class="fas ${item.merit > 0 ? 'fa-halo text-yellow-500' : 'fa-fire text-red-500'}"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-400 flex items-center gap-1">
+                                <i class="far fa-calendar-alt"></i> ${item.date}
+                            </div>
+                            <div class="font-bold text-gray-700">${item.role}</div>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        ${item.merit > 0 ? `<div class="text-sm font-bold text-yellow-600">บุญ +${item.merit}</div>` : ''}
-                        ${item.sin > 0 ? `<div class="text-sm font-bold text-red-500">บาป +${item.sin}</div>` : ''}
+                    <div class="text-right flex flex-col items-end gap-1 mr-2"> ${item.merit > 0 ? `<span class="px-2 py-0.5 rounded-md bg-yellow-50 text-yellow-600 text-xs font-bold border border-yellow-100">+${item.merit} บุญ</span>` : ''}
+                        ${item.sin > 0 ? `<span class="px-2 py-0.5 rounded-md bg-red-50 text-red-500 text-xs font-bold border border-red-100">+${item.sin} บาป</span>` : ''}
                     </div>
+                    
+                    <button onclick="deleteHistoryItem(${index})" class="absolute top-2 right-2 w-6 h-6 bg-gray-100 rounded-full text-gray-400 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all shadow-sm opacity-50 group-hover:opacity-100">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
                 `;
                 list.appendChild(div);
             });
         }
 
+        function deleteHistoryItem(index) {
+            // ถามเพื่อความแน่ใจ (ถ้าไม่อยากให้ถาม ลบบรรทัด if นี้ออกได้เลยครับ)
+            if(!confirm("ต้องการลบบันทึกนี้ใช่หรือไม่?")) return;
+
+            let history = JSON.parse(localStorage.getItem('myKarmaHistory') || '[]');
+            history.splice(index, 1); // ลบข้อมูลที่ตำแหน่ง index
+            localStorage.setItem('myKarmaHistory', JSON.stringify(history)); // บันทึกกลับ
+            loadHistory(); // โหลดหน้าใหม่
+        }
+
         function loadLeaderboard() {
             const list = document.getElementById('leaderboard-list');
-            list.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">กำลังโหลดบัญชีกรรม...</td></tr>';
+            list.innerHTML = `<div class="text-center py-10 animate-pulse"><div class="w-12 h-12 bg-gray-200 rounded-full mx-auto mb-3"></div><div class="h-4 bg-gray-200 rounded w-1/2 mx-auto mb-2"></div><div class="h-3 bg-gray-200 rounded w-1/3 mx-auto"></div></div>`;
 
             fetch(`${SCRIPT_URL}?action=leaderboard`)
             .then(res => res.json())
             .then(data => {
                 list.innerHTML = "";
+                if (data.length === 0) {
+                    list.innerHTML = `<div class="text-center text-gray-400 py-10">ยังไม่มีข้อมูล</div>`;
+                    return;
+                }
                 data.forEach((item, index) => {
-                    // จัดอันดับเหรียญ
-                    let rankDisplay = index + 1;
-                    if(index === 0) rankDisplay = "🥇";
-                    if(index === 1) rankDisplay = "🥈";
-                    if(index === 2) rankDisplay = "🥉";
+                    let rankStyle = "bg-white border-gray-100";
+                    let rankIcon = `<span class="text-gray-400 font-bold text-lg font-mono">#${index+1}</span>`;
+                    let containerClass = "transform transition-all hover:scale-[1.02] active:scale-95";
+                    
+                    if(index === 0) {
+                        rankStyle = "bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200 shadow-md shadow-yellow-100 ring-2 ring-yellow-400/20";
+                        rankIcon = `<div class="w-10 h-10 rounded-full bg-gradient-to-b from-yellow-300 to-yellow-500 flex items-center justify-center text-white text-xl shadow-lg shadow-yellow-500/50">👑</div>`;
+                        containerClass += " scale-105 my-4 z-10";
+                    } else if(index === 1) {
+                        rankStyle = "bg-gray-50 border-gray-200";
+                        rankIcon = `<div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white text-sm font-bold shadow">2</div>`;
+                    } else if(index === 2) {
+                        rankStyle = "bg-orange-50 border-orange-100";
+                        rankIcon = `<div class="w-8 h-8 rounded-full bg-orange-300 flex items-center justify-center text-white text-sm font-bold shadow">3</div>`;
+                    }
 
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="px-3 py-3 text-center font-bold text-gray-600">${rankDisplay}</td>
-                        <td class="px-2 py-3">
-                            <div class="font-bold text-gray-700 text-sm">${item.name}</div>
-                            <div class="text-xs text-gray-400 truncate w-24">${item.role}</div>
-                        </td>
-                        <td class="px-2 py-3 text-center font-bold text-yellow-600 bg-yellow-50 rounded-lg">${item.merit}</td>
-                        <td class="px-3 py-3 text-center font-bold text-red-500">${item.sin}</td>
-                    `;
-                    list.appendChild(row);
+                    const card = document.createElement('div');
+                    card.className = `relative flex items-center p-4 rounded-2xl border ${rankStyle} ${containerClass}`;
+                    card.style.animation = `fadeIn 0.5s ease-out ${index * 0.1}s backwards`;
+
+                    card.innerHTML = `
+                        <div class="w-12 flex-shrink-0 flex justify-center items-center">${rankIcon}</div>
+                        <div class="flex-1 min-w-0 px-3">
+                            <div class="font-bold text-gray-800 text-base truncate leading-tight">${item.name}</div>
+                            <div class="text-xs text-gray-500 truncate mt-0.5 flex items-center gap-1"><i class="fas fa-user-tag text-[10px] opacity-70"></i> ${item.role}</div>
+                        </div>
+                        <div class="flex flex-col items-end gap-1.5 flex-shrink-0 pl-2">
+                            <div class="flex items-center gap-1.5 bg-white/80 px-2 py-1 rounded-lg border border-yellow-100 shadow-sm min-w-[90px] justify-end">
+                                <span class="text-sm font-bold text-yellow-600">✨ ${item.merit}</span>
+                            </div>
+                            ${item.sin > 0 ? `<div class="flex items-center gap-1.5 px-2 py-0.5 min-w-[80px] justify-end opacity-80"><i class="fas fa-fire text-xs text-red-500"></i><span class="text-xs font-bold text-red-400">${item.sin}</span></div>` : ''}
+                        </div>`;
+                    list.appendChild(card);
                 });
+            })
+            .catch(err => {
+                console.error(err);
+                list.innerHTML = `<div class="text-center text-red-400 py-4">โหลดข้อมูลไม่สำเร็จ</div>`;
             });
         }
 
         function toggleModal() {
             const modal = document.getElementById('infoModal');
-            modal.classList.toggle('hidden');
+            if(modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.firstElementChild.classList.remove('scale-95', 'opacity-0'), 10);
+            } else {
+                modal.firstElementChild.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => modal.classList.add('hidden'), 200);
+            }
         }
     </script>
 </body>
